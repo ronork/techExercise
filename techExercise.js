@@ -1,32 +1,32 @@
 //node version used v14.15.4
-
 module.exports = function sortCategoriesForInsert(inputJson) {
-  const part1 = [...inputJson],
-    properJsonOutput = [];
+  const inputJSONCopy = [...inputJson],
+    sortedCategories = [];
 
-  part1.map((val, index) => {
-    if (val.parent_id === null) {
-      part1[index].parent_id = -1;
-    }
-  });
-
-  part1.push({
-    name: "root",
+  //pushing an imaginary root to which all categories with no parents can point to
+  inputJSONCopy.push({
+    name: "-1",
     id: -1,
     parent_id: null,
   });
 
-  const idMapping = part1.reduce((acc, el, i) => {
+  //creating an id mapping for each element
+  const idMapping = inputJSONCopy.reduce((acc, el, i) => {
+    if (el.parent_id === null && el.name !== "-1") {
+      inputJSONCopy[i].parent_id = -1;
+    }
     acc[el.id] = i;
     return acc;
   }, {});
+
+  //constructing the tree
   let root;
-  part1.forEach((el) => {
+  inputJSONCopy.forEach((el) => {
     if (el.parent_id === null) {
       root = el;
       return;
     }
-    const parentEl = part1[idMapping[el.parent_id]];
+    const parentEl = inputJSONCopy[idMapping[el.parent_id]];
     parentEl.children = [...(parentEl.children || []), el];
   });
 
@@ -43,13 +43,13 @@ module.exports = function sortCategoriesForInsert(inputJson) {
   };
 
   traverse(({ name, id, parent_id }) => {
-    if (name !== "root")
-      properJsonOutput.push({
+    if (name !== "-1")
+      sortedCategories.push({
         name,
         id,
         parent_id: parent_id == -1 ? null : parent_id,
       });
   });
 
-  return properJsonOutput;
-}
+  return sortedCategories;
+};
